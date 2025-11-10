@@ -1,94 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ping Pong Game</title>
-  <style>
+<meta charset="UTF-8">
+<title>For My Mummy - Mrs. Altine Lewi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
     body {
-      margin: 0;
-      background: #111;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      color: white;
-      font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        background: linear-gradient(135deg, #ffdddd, #d4ffd4);
+        font-family: "Trebuchet MS", sans-serif;
+        overflow-x: hidden;
     }
-    canvas {
-      background: #000;
-      border: 2px solid white;
+
+    /* Floating Hearts Background Animation */
+    .hearts {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        top: 0;
+        left: 0;
+        z-index: -1;
     }
-  </style>
+    .hearts span {
+        position: absolute;
+        display: block;
+        color: red;
+        font-size: 25px;
+        animation: float 6s linear infinite;
+        opacity: 0.5;
+    }
+    @keyframes float {
+        from { transform: translateY(100vh); }
+        to { transform: translateY(-10vh); }
+    }
+
+    header {
+        padding: 40px 15px;
+        color: white;
+        background: #c20000;
+        animation: fadeIn 2s ease;
+    }
+
+    h1 {
+        margin: 0;
+        font-size: 45px;
+    }
+    h2 {
+        margin: 5px 0 0;
+        font-size: 26px;
+    }
+
+    .card {
+        background: white;
+        border: 4px solid #2b8a2b;
+        max-width: 800px;
+        margin: 70px auto;
+        padding: 30px;
+        border-radius: 20px;
+        animation: popIn 1.5s ease;
+    }
+
+    .card p {
+        font-size: 22px;
+        line-height: 1.7;
+    }
+
+    .heart-big {
+        font-size: 65px;
+        margin-top: 20px;
+        animation: beat 1.3s infinite;
+        color: red;
+    }
+
+    @keyframes beat {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.4); }
+        100% { transform: scale(1); }
+    }
+
+    @keyframes popIn {
+        0% { transform: scale(0.8); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+
+    footer {
+        margin-top: 50px;
+        background: #2b8a2b;
+        color: white;
+        padding: 15px;
+        font-size: 17px;
+    }
+</style>
 </head>
 <body>
-  <canvas id="gameCanvas" width="700" height="400"></canvas>
 
-  <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+<div class="hearts">
+    <!-- Floating Hearts -->
+    <span style="left:10%;">❤️</span>
+    <span style="left:30%;">💚</span>
+    <span style="left:50%;">❤️</span>
+    <span style="left:70%;">💚</span>
+    <span style="left:90%;">❤️</span>
+</div>
 
-    let paddleHeight = 100;
-    let paddleWidth = 10;
-    let playerY = (canvas.height - paddleHeight) / 2;
-    let aiY = (canvas.height - paddleHeight) / 2;
+<!-- Background Music -->
+<audio autoplay loop>
+  <!-- Replace the src with your music file -->
+  <source src="your-music-file.mp3" type="audio/mpeg">
+</audio>
 
-    let ballX = canvas.width / 2;
-    let ballY = canvas.height / 2;
-    let ballSize = 10;
-    let ballSpeedX = 4;
-    let ballSpeedY = 2;
+<header>
+    <h1>To My Amazing Mummy</h1>
+    <h2>Mrs. Altine Lewi ❤️</h2>
+</header>
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+<div class="card">
+    <p>Dear Mummy,</p>
+    <p>
+        Thank you for your endless love, courage and devotion to our family.
+        You are the light, the comfort, and the inspiration in our lives.
+    </p>
+    <p>
+        You are my superhero.<br>
+        My role model.<br>
+        My favourite person in the whole world.
+    </p>
 
-      // Draw player paddle
-      ctx.fillStyle = 'white';
-      ctx.fillRect(10, playerY, paddleWidth, paddleHeight);
+    <div class="heart-big">❤️</div>
+</div>
 
-      // Draw AI paddle
-      ctx.fillRect(canvas.width - 20, aiY, paddleWidth, paddleHeight);
+<footer>
+    Made with love, always. 💐
+</footer>
 
-      // Draw ball
-      ctx.fillRect(ballX, ballY, ballSize, ballSize);
-
-      ballX += ballSpeedX;
-      ballY += ballSpeedY;
-
-      // Ball collision top/bottom
-      if (ballY <= 0 || ballY + ballSize >= canvas.height) {
-        ballSpeedY = -ballSpeedY;
-      }
-
-      // Ball collision with paddles
-      if (ballX <= 20 && ballY + ballSize > playerY && ballY < playerY + paddleHeight) {
-        ballSpeedX = -ballSpeedX;
-      }
-      if (ballX + ballSize >= canvas.width - 20 && ballY + ballSize > aiY && ballY < aiY + paddleHeight) {
-        ballSpeedX = -ballSpeedX;
-      }
-
-      // Reset if ball goes out
-      if (ballX < 0 || ballX > canvas.width) {
-        ballX = canvas.width / 2;
-        ballY = canvas.height / 2;
-      }
-
-      // AI movement (simple follow)
-      if (aiY + paddleHeight / 2 < ballY) aiY += 2;
-      else aiY -= 2;
-
-      requestAnimationFrame(draw);
-    }
-
-    // Player movement with mouse
-    canvas.addEventListener('mousemove', function (e) {
-      playerY = e.clientY - canvas.getBoundingClientRect().top - paddleHeight / 2;
-      if (playerY < 0) playerY = 0;
-      if (playerY + paddleHeight > canvas.height) playerY = canvas.height - paddleHeight;
-    });
-
-    draw();
-  </script>
 </body>
 </html>
