@@ -1,686 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplayer Chess</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 600px;
-            width: 100%;
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 2em;
-        }
-
-        .game-info {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-
-        .status {
-            font-size: 1.2em;
-            color: #555;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-
-        .room-info {
-            font-size: 0.9em;
-            color: #666;
-            margin-top: 10px;
-        }
-
-        .board {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 0;
-            aspect-ratio: 1;
-            border: 3px solid #333;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 0 auto;
-            max-width: 500px;
-        }
-
-        .square {
-            aspect-ratio: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: clamp(2em, 5vw, 3em);
-            cursor: pointer;
-            transition: all 0.2s;
-            user-select: none;
-        }
-
-        .square.light {
-            background: #f0d9b5;
-        }
-
-        .square.dark {
-            background: #b58863;
-        }
-
-        .square.selected {
-            background: #7fa650 !important;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
-        }
-
-        .square.valid-move {
-            position: relative;
-        }
-
-        .square.valid-move::after {
-            content: '';
-            position: absolute;
-            width: 25%;
-            height: 25%;
-            background: rgba(0,0,0,0.3);
-            border-radius: 50%;
-        }
-
-        .square.last-move {
-            background: #aaa23a !important;
-        }
-
-        .square:hover {
-            filter: brightness(0.9);
-        }
-
-        .controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        button {
-            padding: 12px 24px;
-            font-size: 1em;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-            transform: translateY(-2px);
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-        }
-
-        .modal-content h2 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .modal-content input {
-            width: 100%;
-            padding: 12px;
-            font-size: 1em;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .captured-pieces {
-            display: flex;
-            gap: 5px;
-            justify-content: center;
-            flex-wrap: wrap;
-            min-height: 30px;
-            margin: 10px 0;
-        }
-
-        .captured {
-            font-size: 1.5em;
-            opacity: 0.6;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ping Pong Game</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      background: #000;
+      border: 2px solid white;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>♟️ Multiplayer Chess</h1>
-        
-        <div class="game-info">
-            <div class="status" id="status">Welcome! Create or join a game</div>
-            <div class="room-info" id="roomInfo"></div>
-            <div class="captured-pieces" id="capturedWhite"></div>
-            <div class="captured-pieces" id="capturedBlack"></div>
-        </div>
+  <canvas id="gameCanvas" width="700" height="400"></canvas>
 
-        <div class="board" id="board"></div>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
 
-        <div class="controls">
-            <button class="btn-primary" id="createGame">Create Game</button>
-            <button class="btn-success" id="joinGame">Join Game</button>
-            <button class="btn-secondary" id="resetGame" style="display: none;">New Game</button>
-        </div>
-    </div>
+    let paddleHeight = 100;
+    let paddleWidth = 10;
+    let playerY = (canvas.height - paddleHeight) / 2;
+    let aiY = (canvas.height - paddleHeight) / 2;
 
-    <div class="modal" id="joinModal">
-        <div class="modal-content">
-            <h2>Join Game</h2>
-            <input type="text" id="roomCode" placeholder="Enter room code" maxlength="6">
-            <button class="btn-success" id="joinBtn">Join</button>
-            <button class="btn-secondary" id="cancelBtn">Cancel</button>
-        </div>
-    </div>
+    let ballX = canvas.width / 2;
+    let ballY = canvas.height / 2;
+    let ballSize = 10;
+    let ballSpeedX = 4;
+    let ballSpeedY = 2;
 
-    <script>
-        const pieces = {
-            K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙',
-            k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟'
-        };
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const initialBoard = [
-            ['r','n','b','q','k','b','n','r'],
-            ['p','p','p','p','p','p','p','p'],
-            ['','','','','','','',''],
-            ['','','','','','','',''],
-            ['','','','','','','',''],
-            ['','','','','','','',''],
-            ['P','P','P','P','P','P','P','P'],
-            ['R','N','B','Q','K','B','N','R']
-        ];
+      // Draw player paddle
+      ctx.fillStyle = 'white';
+      ctx.fillRect(10, playerY, paddleWidth, paddleHeight);
 
-        let board = JSON.parse(JSON.stringify(initialBoard));
-        let selectedSquare = null;
-        let currentPlayer = 'white';
-        let playerColor = null;
+      // Draw AI paddle
+      ctx.fillRect(canvas.width - 20, aiY, paddleWidth, paddleHeight);
 
-        let roomCode = null;
-        let gameActive = false;
-        let lastMove = null;
-        let capturedPieces = { white: [], black: [] };
+      // Draw ball
+      ctx.fillRect(ballX, ballY, ballSize, ballSize);
 
-        const boardEl = document.getElementById('board');
-        const statusEl = document.getElementById('status');
-        const roomInfoEl = document.getElementById('roomInfo');
-        const joinModal = document.getElementById('joinModal');
+      ballX += ballSpeedX;
+      ballY += ballSpeedY;
 
-        function createBoard() {
-            boardEl.innerHTML = '';
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 8; col++) {
-                    const square = document.createElement('div');
-                    square.className = `square ${(row + col) % 2 === 0 ? 'light' : 'dark'}`;
-                    square.dataset.row = row;
-                    square.dataset.col = col;
-                    
-                    const piece = board[row][col];
-                    if (piece) {
-                        square.textContent = pieces[piece];
-                    }
-                    
-                    if (lastMove && 
-                        ((lastMove.from.row === row && lastMove.from.col === col) ||
-                         (lastMove.to.row === row && lastMove.to.col === col))) {
-                        square.classList.add('last-move');
-                    }
-                    
-                    square.addEventListener('click', () => handleSquareClick(row, col));
-                    boardEl.appendChild(square);
-                }
-            }
-            updateCapturedPieces();
-        }
+      // Ball collision top/bottom
+      if (ballY <= 0 || ballY + ballSize >= canvas.height) {
+        ballSpeedY = -ballSpeedY;
+      }
 
-        function handleSquareClick(row, col) {
-            if (!gameActive || playerColor !== currentPlayer) return;
+      // Ball collision with paddles
+      if (ballX <= 20 && ballY + ballSize > playerY && ballY < playerY + paddleHeight) {
+        ballSpeedX = -ballSpeedX;
+      }
+      if (ballX + ballSize >= canvas.width - 20 && ballY + ballSize > aiY && ballY < aiY + paddleHeight) {
+        ballSpeedX = -ballSpeedX;
+      }
 
-            if (selectedSquare) {
-                const moves = getValidMoves(selectedSquare.row, selectedSquare.col);
-                const isValid = moves.some(m => m.row === row && m.col === col);
-                
-                if (isValid) {
-                    makeMove(selectedSquare.row, selectedSquare.col, row, col);
-                    selectedSquare = null;
-                } else {
-                    selectedSquare = null;
-                    if (board[row][col] && isPlayerPiece(board[row][col], playerColor)) {
-                        selectedSquare = { row, col };
-                    }
-                }
-            } else {
-                if (board[row][col] && isPlayerPiece(board[row][col], playerColor)) {
-                    selectedSquare = { row, col };
-                }
-            }
-            createBoard();
-            if (selectedSquare) highlightValidMoves(selectedSquare.row, selectedSquare.col);
-        }
+      // Reset if ball goes out
+      if (ballX < 0 || ballX > canvas.width) {
+        ballX = canvas.width / 2;
+        ballY = canvas.height / 2;
+      }
 
-        function makeMove(fromRow, fromCol, toRow, toCol) {
-            const captured = board[toRow][toCol];
-            if (captured) {
-                const capturedColor = captured === captured.toUpperCase() ? 'white' : 'black';
-                capturedPieces[capturedColor].push(captured);
-            }
+      // AI movement (simple follow)
+      if (aiY + paddleHeight / 2 < ballY) aiY += 2;
+      else aiY -= 2;
 
-            board[toRow][toCol] = board[fromRow][fromCol];
-            board[fromRow][fromCol] = '';
-            
-            lastMove = { from: { row: fromRow, col: fromCol }, to: { row: toRow, col: toCol } };
-            currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
-            
-            if (conn && conn.open) {
-                conn.send({
-                    type: 'move',
-                    move: { fromRow, fromCol, toRow, toCol },
-                    board: board,
-                    currentPlayer: currentPlayer,
-                    captured: capturedPieces
-                });
-            }
-            
-            updateStatus();
-            createBoard();
-            checkGameOver();
-        }
+      requestAnimationFrame(draw);
+    }
 
-        function isPlayerPiece(piece, color) {
-            return color === 'white' ? piece === piece.toUpperCase() : piece === piece.toLowerCase();
-        }
+    // Player movement with mouse
+    canvas.addEventListener('mousemove', function (e) {
+      playerY = e.clientY - canvas.getBoundingClientRect().top - paddleHeight / 2;
+      if (playerY < 0) playerY = 0;
+      if (playerY + paddleHeight > canvas.height) playerY = canvas.height - paddleHeight;
+    });
 
-        function getValidMoves(row, col) {
-            const piece = board[row][col].toLowerCase();
-            const moves = [];
-            
-            switch(piece) {
-                case 'p': return getPawnMoves(row, col);
-                case 'r': return getRookMoves(row, col);
-                case 'n': return getKnightMoves(row, col);
-                case 'b': return getBishopMoves(row, col);
-                case 'q': return getQueenMoves(row, col);
-                case 'k': return getKingMoves(row, col);
-            }
-            
-            return moves;
-        }
-
-        function getPawnMoves(row, col) {
-            const moves = [];
-            const piece = board[row][col];
-            const direction = piece === piece.toUpperCase() ? -1 : 1;
-            const startRow = piece === piece.toUpperCase() ? 6 : 1;
-            
-            if (board[row + direction] && board[row + direction][col] === '') {
-                moves.push({ row: row + direction, col });
-                if (row === startRow && board[row + 2 * direction][col] === '') {
-                    moves.push({ row: row + 2 * direction, col });
-                }
-            }
-            
-            [-1, 1].forEach(dc => {
-                const newCol = col + dc;
-                if (board[row + direction] && board[row + direction][newCol] && 
-                    isOpponentPiece(board[row + direction][newCol], piece)) {
-                    moves.push({ row: row + direction, col: newCol });
-                }
-            });
-            
-            return moves;
-        }
-
-        function getRookMoves(row, col) {
-            return getLinearMoves(row, col, [[0,1],[0,-1],[1,0],[-1,0]]);
-        }
-
-        function getBishopMoves(row, col) {
-            return getLinearMoves(row, col, [[1,1],[1,-1],[-1,1],[-1,-1]]);
-        }
-
-        function getQueenMoves(row, col) {
-            return getLinearMoves(row, col, [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]);
-        }
-
-        function getKnightMoves(row, col) {
-            const moves = [];
-            const offsets = [[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]];
-            
-            offsets.forEach(([dr, dc]) => {
-                const newRow = row + dr;
-                const newCol = col + dc;
-                if (isValidSquare(newRow, newCol)) {
-                    if (!board[newRow][newCol] || isOpponentPiece(board[newRow][newCol], board[row][col])) {
-                        moves.push({ row: newRow, col: newCol });
-                    }
-                }
-            });
-            
-            return moves;
-        }
-
-        function getKingMoves(row, col) {
-            const moves = [];
-            for (let dr = -1; dr <= 1; dr++) {
-                for (let dc = -1; dc <= 1; dc++) {
-                    if (dr === 0 && dc === 0) continue;
-                    const newRow = row + dr;
-                    const newCol = col + dc;
-                    if (isValidSquare(newRow, newCol)) {
-                        if (!board[newRow][newCol] || isOpponentPiece(board[newRow][newCol], board[row][col])) {
-                            moves.push({ row: newRow, col: newCol });
-                        }
-                    }
-                }
-            }
-            return moves;
-        }
-
-        function getLinearMoves(row, col, directions) {
-            const moves = [];
-            const piece = board[row][col];
-            
-            directions.forEach(([dr, dc]) => {
-                let newRow = row + dr;
-                let newCol = col + dc;
-                
-                while (isValidSquare(newRow, newCol)) {
-                    if (board[newRow][newCol]) {
-                        if (isOpponentPiece(board[newRow][newCol], piece)) {
-                            moves.push({ row: newRow, col: newCol });
-                        }
-                        break;
-                    }
-                    moves.push({ row: newRow, col: newCol });
-                    newRow += dr;
-                    newCol += dc;
-                }
-            });
-            
-            return moves;
-        }
-
-        function isValidSquare(row, col) {
-            return row >= 0 && row < 8 && col >= 0 && col < 8;
-        }
-
-        function isOpponentPiece(piece1, piece2) {
-            return (piece1 === piece1.toUpperCase()) !== (piece2 === piece2.toUpperCase());
-        }
-
-        function highlightValidMoves(row, col) {
-            const moves = getValidMoves(row, col);
-            moves.forEach(move => {
-                const square = boardEl.children[move.row * 8 + move.col];
-                square.classList.add('valid-move');
-            });
-            const selectedEl = boardEl.children[row * 8 + col];
-            selectedEl.classList.add('selected');
-        }
-
-        function updateStatus() {
-            const turn = currentPlayer === playerColor ? 'Your turn' : "Opponent's turn";
-            statusEl.textContent = gameActive ? `${turn} (${currentPlayer})` : 'Waiting for opponent...';
-        }
-
-        function updateCapturedPieces() {
-            document.getElementById('capturedWhite').innerHTML = 
-                capturedPieces.white.map(p => `<span class="captured">${pieces[p]}</span>`).join('');
-            document.getElementById('capturedBlack').innerHTML = 
-                capturedPieces.black.map(p => `<span class="captured">${pieces[p]}</span>`).join('');
-        }
-
-        function checkGameOver() {
-            const whiteKing = board.flat().includes('K');
-            const blackKing = board.flat().includes('k');
-            
-            if (!whiteKing) {
-                statusEl.textContent = 'Black wins! 🎉';
-                gameActive = false;
-            } else if (!blackKing) {
-                statusEl.textContent = 'White wins! 🎉';
-                gameActive = false;
-            }
-        }
-
-        // Simple peer-to-peer using PeerJS CDN
-        let peer = null;
-        let conn = null;
-        let isHost = false;
-
-        function initializePeer(room) {
-            // Load PeerJS from CDN
-            if (!window.Peer) {
-                const script = document.createElement('script');
-                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js';
-                script.onload = () => setupPeer(room);
-                document.head.appendChild(script);
-            } else {
-                setupPeer(room);
-            }
-        }
-
-        function setupPeer(room) {
-            peer = new Peer(room, {
-                host: 'peerjs-server.herokuapp.com',
-                secure: true,
-                port: 443,
-                debug: 0
-            });
-
-            peer.on('open', (id) => {
-                roomCode = id;
-                playerColor = 'white';
-                isHost = true;
-                roomInfoEl.textContent = `Room Code: ${roomCode} | You are: WHITE | Waiting for opponent...`;
-                statusEl.textContent = 'Share the room code with your opponent!';
-                document.getElementById('resetGame').style.display = 'inline-block';
-            });
-
-            peer.on('connection', (connection) => {
-                conn = connection;
-                setupConnection();
-                gameActive = true;
-                statusEl.textContent = 'Opponent joined! Your turn (white)';
-                
-                // Send welcome message
-                conn.on('open', () => {
-                    conn.send({ type: 'welcome', color: 'black' });
-                });
-            });
-
-            peer.on('error', (err) => {
-                console.error('Peer error:', err);
-                if (err.type === 'peer-unavailable') {
-                    statusEl.textContent = 'Room not found! Check the code and try again.';
-                }
-            });
-        }
-
-        function connectToPeer(room) {
-            if (!window.Peer) {
-                const script = document.createElement('script');
-                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js';
-                script.onload = () => joinPeer(room);
-                document.head.appendChild(script);
-            } else {
-                joinPeer(room);
-            }
-        }
-
-        function joinPeer(room) {
-            peer = new Peer();
-            
-            peer.on('open', () => {
-                conn = peer.connect(room);
-                
-                conn.on('open', () => {
-                    roomCode = room;
-                    playerColor = 'black';
-                    isHost = false;
-                    gameActive = true;
-                    roomInfoEl.textContent = `Room: ${roomCode} | You are: BLACK`;
-                    statusEl.textContent = "Opponent's turn (white)";
-                    document.getElementById('resetGame').style.display = 'inline-block';
-                    setupConnection();
-                });
-                
-                conn.on('error', (err) => {
-                    console.error('Connection error:', err);
-                    statusEl.textContent = 'Failed to connect. Room may not exist.';
-                });
-            });
-        }
-
-        function setupConnection() {
-            conn.on('data', (data) => {
-                if (data.type === 'move') {
-                    board = data.board;
-                    currentPlayer = data.currentPlayer;
-                    capturedPieces = data.captured;
-                    lastMove = data.move ? {
-                        from: { row: data.move.fromRow, col: data.move.fromCol },
-                        to: { row: data.move.toRow, col: data.move.toCol }
-                    } : null;
-                    createBoard();
-                    updateStatus();
-                    checkGameOver();
-                } else if (data.type === 'reset') {
-                    resetGame();
-                } else if (data.type === 'welcome') {
-                    playerColor = data.color;
-                }
-            });
-
-            conn.on('close', () => {
-                gameActive = false;
-                statusEl.textContent = 'Opponent disconnected';
-            });
-        }
-
-        function resetGame() {
-            board = JSON.parse(JSON.stringify(initialBoard));
-            currentPlayer = 'white';
-            selectedSquare = null;
-            lastMove = null;
-            capturedPieces = { white: [], black: [] };
-            gameActive = true;
-            createBoard();
-            updateStatus();
-        }
-
-        document.getElementById('createGame').addEventListener('click', () => {
-            const room = 'chess-' + Math.random().toString(36).substring(2, 9);
-            initializePeer(room);
-        });
-
-        document.getElementById('joinGame').addEventListener('click', () => {
-            joinModal.classList.add('active');
-        });
-
-        document.getElementById('joinBtn').addEventListener('click', () => {
-            const code = document.getElementById('roomCode').value.trim();
-            if (code.length >= 6) {
-                connectToPeer(code);
-                joinModal.classList.remove('active');
-            }
-        });
-
-        document.getElementById('cancelBtn').addEventListener('click', () => {
-            joinModal.classList.remove('active');
-        });
-
-        document.getElementById('resetGame').addEventListener('click', () => {
-            if (conn && conn.open) {
-                conn.send({ type: 'reset' });
-            }
-            resetGame();
-        });
-
-        createBoard();
-        updateStatus();
-    </script>
+    draw();
+  </script>
 </body>
 </html>
