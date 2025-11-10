@@ -277,7 +277,7 @@
         let selectedSquare = null;
         let currentPlayer = 'white';
         let playerColor = null;
-        let ws = null;
+
         let roomCode = null;
         let gameActive = false;
         let lastMove = null;
@@ -353,15 +353,14 @@
             lastMove = { from: { row: fromRow, col: fromCol }, to: { row: toRow, col: toCol } };
             currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
             
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
+            if (conn && conn.open) {
+                conn.send({
                     type: 'move',
-                    room: roomCode,
                     move: { fromRow, fromCol, toRow, toCol },
                     board: board,
                     currentPlayer: currentPlayer,
                     captured: capturedPieces
-                }));
+                });
             }
             
             updateStatus();
@@ -526,27 +525,98 @@
             }
         }
 
-        function connectWebSocket(room) {
-            ws = new WebSocket('wss://socketsbay.com/wss/v2/1/demo/');
-            
-            ws.onopen = () => {
-                ws.send(JSON.stringify({ type: 'join', room }));
-            };
-            
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
+        // Simple peer-to-peer using PeerJS CDN
+        let peer = null;
+        let conn = null;
+        let isHost = false;
+
+        function initializePeer(room) {
+            // Load PeerJS from CDN
+            if (!window.Peer) {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js';
+                script.onload = () => setupPeer(room);
+                document.head.appendChild(script);
+            } else {
+                setupPeer(room);
+            }
+        }
+
+        function setupPeer(room) {
+            peer = new Peer(room, {
+                host: 'peerjs-server.herokuapp.com',
+                secure: true,
+                port: 443,
+                debug: 0
+            });
+
+            peer.on('open', (id) => {
+                roomCode = id;
+                playerColor = 'white';
+                isHost = true;
+                roomInfoEl.textContent = `Room Code: ${roomCode} | You are: WHITE | Waiting for opponent...`;
+                statusEl.textContent = 'Share the room code with your opponent!';
+                document.getElementById('resetGame').style.display = 'inline-block';
+            });
+
+            peer.on('connection', (connection) => {
+                conn = connection;
+                setupConnection();
+                gameActive = true;
+                statusEl.textContent = 'Opponent joined! Your turn (white)';
                 
-                if (data.type === 'joined') {
+                // Send welcome message
+                conn.on('open', () => {
+                    conn.send({ type: 'welcome', color: 'black' });
+                });
+            });
+
+            peer.on('error', (err) => {
+                console.error('Peer error:', err);
+                if (err.type === 'peer-unavailable') {
+                    statusEl.textContent = 'Room not found! Check the code and try again.';
+                }
+            });
+        }
+
+        function connectToPeer(room) {
+            if (!window.Peer) {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js';
+                script.onload = () => joinPeer(room);
+                document.head.appendChild(script);
+            } else {
+                joinPeer(room);
+            }
+        }
+
+        function joinPeer(room) {
+            peer = new Peer();
+            
+            peer.on('open', () => {
+                conn = peer.connect(room);
+                
+                conn.on('open', () => {
                     roomCode = room;
-                    playerColor = data.color;
-                    gameActive = data.start;
-                    roomInfoEl.textContent = `Room: ${roomCode} | You are: ${playerColor}`;
-                    document.getElementById('resetGame').style.display = 'inline-block';
-                    updateStatus();
-                } else if (data.type === 'start') {
+                    playerColor = 'black';
+                    isHost = false;
                     gameActive = true;
-                    updateStatus();
-                } else if (data.type === 'move') {
+                    roomInfoEl.textContent = `Room: ${roomCode} | You are: BLACK`;
+                    statusEl.textContent = "Opponent's turn (white)";
+                    document.getElementById('resetGame').style.display = 'inline-block';
+                    setupConnection();
+                });
+                
+                conn.on('error', (err) => {
+                    console.error('Connection error:', err);
+                    statusEl.textContent = 'Failed to connect. Room may not exist.';
+                });
+            });
+        }
+
+        function setupConnection() {
+            conn.on('data', (data) => {
+                if (data.type === 'move') {
                     board = data.board;
                     currentPlayer = data.currentPlayer;
                     capturedPieces = data.captured;
@@ -559,8 +629,15 @@
                     checkGameOver();
                 } else if (data.type === 'reset') {
                     resetGame();
+                } else if (data.type === 'welcome') {
+                    playerColor = data.color;
                 }
-            };
+            });
+
+            conn.on('close', () => {
+                gameActive = false;
+                statusEl.textContent = 'Opponent disconnected';
+            });
         }
 
         function resetGame() {
@@ -575,8 +652,8 @@
         }
 
         document.getElementById('createGame').addEventListener('click', () => {
-            const room = Math.random().toString(36).substring(2, 8).toUpperCase();
-            connectWebSocket(room);
+            const room = 'chess-' + Math.random().toString(36).substring(2, 9);
+            initializePeer(room);
         });
 
         document.getElementById('joinGame').addEventListener('click', () => {
@@ -584,9 +661,9 @@
         });
 
         document.getElementById('joinBtn').addEventListener('click', () => {
-            const code = document.getElementById('roomCode').value.toUpperCase();
-            if (code.length === 6) {
-                connectWebSocket(code);
+            const code = document.getElementById('roomCode').value.trim();
+            if (code.length >= 6) {
+                connectToPeer(code);
                 joinModal.classList.remove('active');
             }
         });
@@ -596,8 +673,8 @@
         });
 
         document.getElementById('resetGame').addEventListener('click', () => {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'reset', room: roomCode }));
+            if (conn && conn.open) {
+                conn.send({ type: 'reset' });
             }
             resetGame();
         });
